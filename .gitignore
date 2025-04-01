@@ -134,3 +134,13 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+#JetBrains
+.idea
+
+#output
+hrefs.tsx
+
+#playwright
+playwright-report
+test-results
