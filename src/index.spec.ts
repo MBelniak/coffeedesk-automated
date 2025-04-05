@@ -18,7 +18,6 @@ const PRODUCER_LIST = [
   "GOOD COFFEE",
   "HARD BEANS",
   "HAYB",
-  "HERESY",
   "KAFAR",
   "KYOTO",
   "LA CABRA",
@@ -82,11 +81,12 @@ async function moreFilters(page: Page) {
   await page.getByText("Więcej filtrów").click();
 }
 
-async function setMaxPrice(page: Page) {
+async function setPrice(page: Page) {
   // It's matching CENA and OCENA MIN.
   await (await page.locator(".more-filters-container").getByText("Cena").all())
     .at(0)
     ?.click();
+  await page.locator(".form-control.min-input").fill("45");
   await page.locator(".form-control.max-input").fill("80");
 }
 
@@ -176,7 +176,7 @@ test("get all interesting coffees", async ({ page }) => {
   await filterByProducers(page);
   await sortByPrice(page);
   await moreFilters(page);
-  await setMaxPrice(page);
+  await setPrice(page);
   await setFlavours(page);
   await waitForLoaderToDetach(page);
 
@@ -208,8 +208,9 @@ test("get all interesting coffees", async ({ page }) => {
     await goToNextPage(page);
   } while (true);
 
+  fs.mkdirSync("out");
   fs.writeFileSync(
-    "./hrefs.txt",
+    "./out/hrefs.txt",
     listedProductsHrefs
       .filter((href) => !/Sie-Przelewa/.test(href ?? ""))
       .filter((href) => !/Coffee-Plant-Flow-/.test(href ?? ""))

@@ -5,7 +5,7 @@
   "main": "index.mjs",
   "scripts": {
     "test": "playwright test",
-    "start": "tsx ./index.ts"
+    "start": "playwright test && powershell startChrome.ps1"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +17,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
-    "@types/node": "^22.13.14",
-    "tsx": "^4.19.3"
+    "@types/node": "^22.13.14"
   }
 }

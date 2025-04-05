@@ -1,0 +1,1 @@
+Get-Content .\out\hrefs.txt | ForEach-Object { & "C:\Program Files\Google\Chrome\Application\chrome.exe" $_ }
