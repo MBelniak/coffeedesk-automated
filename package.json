@@ -5,7 +5,7 @@
   "main": "index.mjs",
   "scripts": {
     "test": "playwright test",
-    "start": "playwright test && powershell startChrome.ps1"
+    "start": "playwright test && powershell .\\startChrome.ps1"
   },
   "keywords": [],
   "author": "",

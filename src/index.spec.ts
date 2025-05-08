@@ -208,7 +208,9 @@ test("get all interesting coffees", async ({ page }) => {
     await goToNextPage(page);
   } while (true);
 
-  fs.mkdirSync("out");
+  if (!fs.existsSync("out")) {
+    fs.mkdirSync("out");
+  }
   fs.writeFileSync(
     "./out/hrefs.txt",
     listedProductsHrefs
