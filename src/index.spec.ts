@@ -19,6 +19,7 @@ const PRODUCER_LIST = [
   "HARD BEANS",
   "HAYB",
   "KAFAR",
+  "KLARO",
   "KYOTO",
   "LA CABRA",
   "LYKKE",
@@ -29,6 +30,7 @@ const PRODUCER_LIST = [
   "SPOJKA",
   "STORY COFFEE ROASTERS",
   "THE COFFEE COLLECTIVE",
+  "TRIGGER",
 ];
 
 const FLAVOURS = [
@@ -51,16 +53,22 @@ const confirmCookies = async (page: Page) => {
 
 async function selectFromMultiSelectFilter(
   filterContainer: Locator,
-  options: string[],
+  optionsToSelect: string[],
 ) {
   await filterContainer.click();
   const availableOptions = await filterContainer.locator("li").all();
-  for (const option of availableOptions) {
+  for (const availableOption of availableOptions) {
+    const availableOptionText = (
+      (await availableOption.textContent()) ?? ""
+    ).trim();
+
     if (
-      options.includes(((await option.textContent()) ?? "").trim()) &&
-      (await option.locator("input").getAttribute("disabled")) == null
+      optionsToSelect.some((option) =>
+        availableOptionText.toLowerCase().startsWith(option.toLowerCase()),
+      ) &&
+      (await availableOption.locator("input").getAttribute("disabled")) == null
     ) {
-      await option.locator("label").click();
+      await availableOption.locator("label").click();
     }
   }
 }
