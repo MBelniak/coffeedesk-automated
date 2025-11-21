@@ -44,6 +44,9 @@ const FLAVOURS = [
   "słodkie",
 ];
 
+const MIN_PRICE = "40";
+const MAX_PRICE = "80";
+
 const confirmCookies = async (page: Page) => {
   const cookieConfirmButton = page.locator(
     "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
@@ -94,8 +97,8 @@ async function setPrice(page: Page) {
   await (await page.locator(".more-filters-container").getByText("Cena").all())
     .at(0)
     ?.click();
-  await page.locator(".form-control.min-input").fill("45");
-  await page.locator(".form-control.max-input").fill("80");
+  await page.locator(".form-control.min-input").fill(MIN_PRICE);
+  await page.locator(".form-control.max-input").fill(MAX_PRICE);
 }
 
 async function setFlavours(page: Page) {
