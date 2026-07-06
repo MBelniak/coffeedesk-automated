@@ -3,9 +3,11 @@ import * as fs from "node:fs";
 import { addMonths, isBefore, parse } from "date-fns";
 
 const PRODUCER_LIST = [
+  "19GRAMS",
   "3FE",
   "BONANZA COFFEE",
   "BRACIA ZIÓŁKOWSCY",
+  "BYMYBEAN",
   "CASINO MOCCA",
   "COFFEE PLANT",
   "COFFEELAB",
@@ -22,10 +24,12 @@ const PRODUCER_LIST = [
   "KLARO",
   "KYOTO",
   "LA CABRA",
+  "LEŃ COFFEE",
   "LYKKE",
   "MAMAM",
   "NOMAD COFFEE",
   "ONYX COFFEE LAB",
+  "PALOMA",
   "ROCKET BEAN",
   "SPOJKA",
   "STORY COFFEE ROASTERS",
@@ -78,6 +82,13 @@ async function selectFromMultiSelectFilter(
 
 async function filterByProducers(page: Page) {
   const producerDropdown = page.locator(".filter-multi-select-manufacturer");
+  // Show all manufacturers (by default only 5 are visible)
+  const showAllBtn = producerDropdown.locator(
+    ".coffeedesk-filter-show-all-toggle",
+  );
+  if ((await showAllBtn.count()) > 0) {
+    await showAllBtn.click();
+  }
   await selectFromMultiSelectFilter(producerDropdown, PRODUCER_LIST);
 }
 
@@ -88,24 +99,27 @@ async function sortByPrice(page: Page) {
   await priceAscOption.click();
 }
 
-async function moreFilters(page: Page) {
-  await page.getByText("Więcej filtrów").click();
+async function moreFilters(_page: Page) {
+  // No longer needed: all filters (price, flavours) are in the same panel as producers
 }
 
 async function setPrice(page: Page) {
-  // It's matching CENA and OCENA MIN.
-  await (await page.locator(".more-filters-container").getByText("Cena").all())
-    .at(0)
-    ?.click();
+  // Expand the "Cena" (price) section if it is collapsed
+  const cenaToggle = page.locator('[data-filter-name="Cena"]');
+  if ((await cenaToggle.getAttribute("aria-expanded")) !== "true") {
+    await cenaToggle.click();
+  }
   await page.locator(".form-control.min-input").fill(MIN_PRICE);
   await page.locator(".form-control.max-input").fill(MAX_PRICE);
 }
 
 async function setFlavours(page: Page) {
-  const flavoursDropdown = page
-    .locator(".filter-panel-items-container")
-    .getByText("Nuty smakowe");
-  await selectFromMultiSelectFilter(flavoursDropdown, FLAVOURS);
+  // Target the parent .filter-multi-select container (which holds both the toggle
+  // button and the li options), not just the button text element.
+  const flavoursSection = page
+    .locator(".filter-panel-items-container .filter-multi-select")
+    .filter({ hasText: "Nuty smakowe" });
+  await selectFromMultiSelectFilter(flavoursSection, FLAVOURS);
 }
 
 async function onlyFreshRoast(product: Locator) {
@@ -141,7 +155,7 @@ async function getAllCoffees(page: Page) {
 }
 
 async function waitForLoaderToDetach(page: Page) {
-  await page.locator(".has-element-loader").waitFor({ state: "detached" });
+  await page.waitForLoadState("networkidle");
 }
 
 async function goToNextPage(page: Page) {
@@ -181,7 +195,8 @@ test("get all interesting coffees", async ({ page }) => {
     "https://www.coffeedesk.pl/kawa/metoda-parzenia/przelewowe-metody-parzenia/",
   );
   await page.addStyleTag({
-    content: "#snrs-popup-wrapper-ns {display: none !important;}",
+    content:
+      "#snrs-popup-wrapper-ns, .snrs-modal-wrapper {display: none !important;}",
   });
   await confirmCookies(page);
   await filterByProducers(page);
@@ -199,11 +214,15 @@ test("get all interesting coffees", async ({ page }) => {
     const freshCoffees = await getFreshCoffees(availableCoffees);
     const freshCoffeesLinks = await Promise.all(
       freshCoffees.map((coffee) =>
-        coffee.locator(".product-info a").getAttribute("href"),
+        coffee.locator(".product-info a.product-name").getAttribute("href"),
       ),
     );
 
-    listedProductsHrefs.push(...freshCoffeesLinks);
+    listedProductsHrefs.push(
+      ...freshCoffeesLinks
+        .filter((href) => !/Sie-Przelewa/.test(href ?? ""))
+        .filter((href) => !/Coffee-Plant-Flow-/.test(href ?? "")),
+    );
 
     if (allCoffees.length !== availableCoffees.length) {
       break;
@@ -211,7 +230,7 @@ test("get all interesting coffees", async ({ page }) => {
 
     try {
       let nextPageBtn = page.locator(".page-next");
-      await expect(nextPageBtn).toBeEnabled();
+      await expect(nextPageBtn).not.toHaveClass(/disabled/);
     } catch (e) {
       break;
     }
@@ -222,11 +241,5 @@ test("get all interesting coffees", async ({ page }) => {
   if (!fs.existsSync("out")) {
     fs.mkdirSync("out");
   }
-  fs.writeFileSync(
-    "./out/hrefs.txt",
-    listedProductsHrefs
-      .filter((href) => !/Sie-Przelewa/.test(href ?? ""))
-      .filter((href) => !/Coffee-Plant-Flow-/.test(href ?? ""))
-      .join("\n"),
-  );
+  fs.writeFileSync("./out/hrefs.txt", listedProductsHrefs.join("\n"));
 });
